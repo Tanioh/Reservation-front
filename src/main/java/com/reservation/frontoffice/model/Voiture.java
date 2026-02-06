@@ -27,7 +27,7 @@ public class Voiture {
     @Column(name = "nb_places")
     private Integer nbPlaces;
 
-    @Column(name = "prix_journalier", nullable = false)
+    @Column(name = "prix_journalier", nullable = false, precision = 10, scale = 2)
     private Double prixJournalier;
 
     @Column

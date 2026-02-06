@@ -32,7 +32,7 @@ public class Reservation {
     @NotNull
     private LocalDate dateFin;
 
-    @Column(name = "montant_total")
+    @Column(name = "montant_total", precision = 10, scale = 2)
     private Double montantTotal;
 
     @Column(length = 30)
