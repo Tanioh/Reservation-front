@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation Voiture - Accueil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-car-front-fill"></i> Réservation Voiture
+            </a>
+            <div class="navbar-nav">
+                <a class="nav-link active" href="/">Accueil</a>
+                <a class="nav-link" href="/reservations">Mes Réservations</a>
+                <a class="nav-link" href="/nouvelle-reservation">Réserver</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-light py-5">
+        <div class="container text-center">
+            <h1 class="display-4"><i class="bi bi-car-front"></i> Location de Voitures</h1>
+            <p class="lead text-muted">Réservez votre voiture en ligne, simplement et rapidement</p>
+            <a href="/nouvelle-reservation" class="btn btn-primary btn-lg mt-3">
+                <i class="bi bi-calendar-plus"></i> Réserver maintenant
+            </a>
+        </div>
+    </div>
+
+    <!-- Voitures disponibles -->
+    <div class="container mt-5">
+        <h2 class="mb-4"><i class="bi bi-car-front-fill"></i> Voitures Disponibles</h2>
+        <div class="row">
+            <div th:each="v : ${voitures}" class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-car-front"></i>
+                            <span th:text="${v.marque + ' ' + v.modele}">Marque Modèle</span>
+                        </h5>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-hash"></i> <span th:text="${v.immatriculation}">AA-123-BB</span></li>
+                            <li><i class="bi bi-palette"></i> <span th:text="${v.couleur}">Couleur</span></li>
+                            <li><i class="bi bi-people"></i> <span th:text="${v.nbPlaces}">5</span> places</li>
+                            <li class="fw-bold text-success mt-2">
+                                <i class="bi bi-currency-euro"></i>
+                                <span th:text="${v.prixJournalier}">0</span> € / jour
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <a th:href="@{/nouvelle-reservation(voiture=${v.idVoiture})}" 
+                           class="btn btn-primary w-100">
+                            <i class="bi bi-calendar-check"></i> Réserver
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <p class="mb-0">&copy; 2026 Réservation Voiture - Sprint 1</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

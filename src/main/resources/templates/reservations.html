@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Réservations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-car-front-fill"></i> Réservation Voiture
+            </a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">Accueil</a>
+                <a class="nav-link active" href="/reservations">Mes Réservations</a>
+                <a class="nav-link" href="/nouvelle-reservation">Réserver</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Vue.js App pour la liste des réservations avec filtres -->
+    <div id="app" class="container mt-4">
+        <h2><i class="bi bi-list-check"></i> Liste des Réservations</h2>
+
+        <!-- Filtres -->
+        <div class="card mb-4 mt-3">
+            <div class="card-header bg-light">
+                <i class="bi bi-funnel"></i> Filtrer par date
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Date début (à partir de)</label>
+                        <input type="date" class="form-control" v-model="filtres.dateDebut">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Date fin (jusqu'à)</label>
+                        <input type="date" class="form-control" v-model="filtres.dateFin">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Statut</label>
+                        <select class="form-select" v-model="filtres.statut">
+                            <option value="">-- Tous --</option>
+                            <option value="EN_ATTENTE">En attente</option>
+                            <option value="CONFIRMEE">Confirmée</option>
+                            <option value="ANNULEE">Annulée</option>
+                            <option value="TERMINEE">Terminée</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button class="btn btn-outline-primary" @click="rechercher">
+                            <i class="bi bi-search"></i> Rechercher
+                        </button>
+                        <button class="btn btn-outline-secondary" @click="reinitialiser">
+                            <i class="bi bi-x-lg"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chargement -->
+        <div v-if="loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+
+        <!-- Tableau -->
+        <div v-else class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-primary">
+                    <tr>
+                        <th>#</th>
+                        <th>Client</th>
+                        <th>Voiture</th>
+                        <th>Date début</th>
+                        <th>Date fin</th>
+                        <th>Montant (€)</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="r in reservations" :key="r.idReservation">
+                        <td>{{ r.idReservation }}</td>
+                        <td>{{ r.client.prenom }} {{ r.client.nom }}</td>
+                        <td>{{ r.voiture.marque }} {{ r.voiture.modele }}</td>
+                        <td>{{ r.dateDebut }}</td>
+                        <td>{{ r.dateFin }}</td>
+                        <td>{{ r.montantTotal?.toFixed(2) }}</td>
+                        <td>
+                            <span class="badge" :class="badgeClass(r.statut)">
+                                {{ r.statut }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr v-if="reservations.length === 0">
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox"></i> Aucune réservation trouvée
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="text-muted">
+                <small>Total : {{ reservations.length }} réservation(s)</small>
+            </p>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <p class="mb-0">&copy; 2026 Réservation Voiture - Sprint 1</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const reservations = ref([]);
+                const loading = ref(false);
+                const filtres = ref({
+                    dateDebut: '',
+                    dateFin: '',
+                    statut: ''
+                });
+
+                async function chargerReservations(params = {}) {
+                    loading.value = true;
+                    try {
+                        const queryParts = [];
+                        if (params.dateDebut) queryParts.push(`dateDebut=${params.dateDebut}`);
+                        if (params.dateFin) queryParts.push(`dateFin=${params.dateFin}`);
+                        if (params.statut) queryParts.push(`statut=${params.statut}`);
+                        
+                        const queryString = queryParts.length > 0 ? '?' + queryParts.join('&') : '';
+                        const response = await fetch(`/api/reservations${queryString}`);
+                        reservations.value = await response.json();
+                    } catch (error) {
+                        console.error('Erreur:', error);
+                    } finally {
+                        loading.value = false;
+                    }
+                }
+
+                function rechercher() {
+                    chargerReservations(filtres.value);
+                }
+
+                function reinitialiser() {
+                    filtres.value = { dateDebut: '', dateFin: '', statut: '' };
+                    chargerReservations();
+                }
+
+                function badgeClass(statut) {
+                    switch (statut) {
+                        case 'CONFIRMEE': return 'bg-success';
+                        case 'EN_ATTENTE': return 'bg-warning text-dark';
+                        case 'ANNULEE': return 'bg-danger';
+                        case 'TERMINEE': return 'bg-secondary';
+                        default: return 'bg-info';
+                    }
+                }
+
+                onMounted(() => chargerReservations());
+
+                return { reservations, loading, filtres, rechercher, reinitialiser, badgeClass };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouvelle Réservation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-car-front-fill"></i> Réservation Voiture
+            </a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/">Accueil</a>
+                <a class="nav-link" href="/reservations">Mes Réservations</a>
+                <a class="nav-link active" href="/nouvelle-reservation">Réserver</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Vue.js App pour la création de réservation -->
+    <div id="app" class="container mt-4">
+        <h2><i class="bi bi-calendar-plus"></i> Nouvelle Réservation</h2>
+
+        <!-- Message de succès -->
+        <div v-if="success" class="alert alert-success alert-dismissible fade show mt-3">
+            <i class="bi bi-check-circle"></i> Réservation créée avec succès !
+            <a href="/reservations" class="alert-link">Voir mes réservations</a>
+            <button type="button" class="btn-close" @click="success = false"></button>
+        </div>
+
+        <!-- Message d'erreur -->
+        <div v-if="erreur" class="alert alert-danger alert-dismissible fade show mt-3">
+            <i class="bi bi-exclamation-triangle"></i> {{ erreur }}
+            <button type="button" class="btn-close" @click="erreur = ''"></button>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <form @submit.prevent="soumettre">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Client *</label>
+                            <select class="form-select" v-model="form.idClient" required>
+                                <option value="">-- Sélectionner --</option>
+                                <option v-for="c in clients" :key="c.idClient" :value="c.idClient">
+                                    {{ c.prenom }} {{ c.nom }} ({{ c.email }})
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Voiture *</label>
+                            <select class="form-select" v-model="form.idVoiture" required @change="calculerMontant">
+                                <option value="">-- Sélectionner --</option>
+                                <option v-for="v in voitures" :key="v.idVoiture" :value="v.idVoiture">
+                                    {{ v.marque }} {{ v.modele }} - {{ v.immatriculation }} ({{ v.prixJournalier }}€/jour)
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Date début *</label>
+                            <input type="date" class="form-control" v-model="form.dateDebut" 
+                                   required @change="calculerMontant">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date fin *</label>
+                            <input type="date" class="form-control" v-model="form.dateFin" 
+                                   required @change="calculerMontant">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Montant estimé</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" :value="montantEstime" readonly>
+                                <span class="input-group-text">€</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Commentaire</label>
+                        <textarea class="form-control" v-model="form.commentaire" rows="3"
+                                  placeholder="Informations supplémentaires..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success" :disabled="submitting">
+                            <span v-if="submitting" class="spinner-border spinner-border-sm"></span>
+                            <i v-else class="bi bi-check-lg"></i>
+                            {{ submitting ? 'Envoi...' : 'Réserver' }}
+                        </button>
+                        <a href="/" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Retour
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <p class="mb-0">&copy; 2026 Réservation Voiture - Sprint 1</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const clients = ref([]);
+                const voitures = ref([]);
+                const success = ref(false);
+                const erreur = ref('');
+                const submitting = ref(false);
+
+                const form = ref({
+                    idClient: '',
+                    idVoiture: '',
+                    dateDebut: '',
+                    dateFin: '',
+                    commentaire: ''
+                });
+
+                const montantEstime = computed(() => {
+                    if (!form.value.dateDebut || !form.value.dateFin || !form.value.idVoiture) return '0.00';
+                    const debut = new Date(form.value.dateDebut);
+                    const fin = new Date(form.value.dateFin);
+                    const voiture = voitures.value.find(v => v.idVoiture == form.value.idVoiture);
+                    if (!voiture || fin <= debut) return '0.00';
+                    const jours = Math.ceil((fin - debut) / (1000 * 60 * 60 * 24));
+                    return (jours * voiture.prixJournalier).toFixed(2);
+                });
+
+                async function chargerDonnees() {
+                    try {
+                        const [clientsRes, voituresRes] = await Promise.all([
+                            fetch('/api/reservations/clients'),
+                            fetch('/api/reservations/voitures')
+                        ]);
+                        clients.value = await clientsRes.json();
+                        voitures.value = await voituresRes.json();
+
+                        // Pré-sélection si paramètre URL
+                        const params = new URLSearchParams(window.location.search);
+                        if (params.get('voiture')) {
+                            form.value.idVoiture = parseInt(params.get('voiture'));
+                        }
+                    } catch (error) {
+                        console.error('Erreur chargement:', error);
+                    }
+                }
+
+                async function soumettre() {
+                    submitting.value = true;
+                    erreur.value = '';
+                    success.value = false;
+
+                    try {
+                        const response = await fetch('/api/reservations', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                idClient: parseInt(form.value.idClient),
+                                idVoiture: parseInt(form.value.idVoiture),
+                                dateDebut: form.value.dateDebut,
+                                dateFin: form.value.dateFin,
+                                commentaire: form.value.commentaire
+                            })
+                        });
+
+                        if (response.ok) {
+                            success.value = true;
+                            form.value = { idClient: '', idVoiture: '', dateDebut: '', dateFin: '', commentaire: '' };
+                        } else {
+                            const data = await response.json();
+                            erreur.value = data.error || 'Erreur lors de la création';
+                        }
+                    } catch (error) {
+                        erreur.value = 'Erreur de connexion au serveur';
+                    } finally {
+                        submitting.value = false;
+                    }
+                }
+
+                function calculerMontant() { /* handled by computed */ }
+
+                onMounted(chargerDonnees);
+
+                return { clients, voitures, form, success, erreur, submitting, montantEstime, soumettre, calculerMontant };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
