@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -71,8 +70,8 @@ public class ReservationApiController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> payload) {
         try {
-            Integer idClient = (Integer) payload.get("idClient");
-            Integer idVoiture = (Integer) payload.get("idVoiture");
+            Integer idClient = ((Number) payload.get("idClient")).intValue();
+            Integer idVoiture = ((Number) payload.get("idVoiture")).intValue();
             String dateDebutStr = (String) payload.get("dateDebut");
             String dateFinStr = (String) payload.get("dateFin");
             String commentaire = (String) payload.get("commentaire");

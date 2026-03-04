@@ -2,7 +2,6 @@ package com.reservation.frontoffice.controller;
 
 import com.reservation.frontoffice.model.Voiture;
 import com.reservation.frontoffice.repository.VoitureRepository;
-import com.reservation.frontoffice.repository.ClientRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

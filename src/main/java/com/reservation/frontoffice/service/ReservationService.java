@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -46,8 +47,11 @@ public class ReservationService {
      * Calcule automatiquement le montant total.
      */
     public Reservation creerReservation(Reservation reservation) {
+        // Date de réservation
+        reservation.setDateReservation(LocalDateTime.now());
+
         // Calcul du montant si non défini
-        if (reservation.getMontantTotal() == null || reservation.getMontantTotal() == 0) {
+        if (reservation.getMontantTotal() == null || reservation.getMontantTotal() <= 0) {
             long jours = ChronoUnit.DAYS.between(reservation.getDateDebut(), reservation.getDateFin());
             if (jours > 0 && reservation.getVoiture() != null) {
                 reservation.setMontantTotal(jours * reservation.getVoiture().getPrixJournalier());

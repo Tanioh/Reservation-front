@@ -1,5 +1,6 @@
 package com.reservation.frontoffice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -27,14 +28,15 @@ public class Voiture {
     @Column(name = "nb_places")
     private Integer nbPlaces;
 
-    @Column(name = "prix_journalier", nullable = false, precision = 10, scale = 2)
+    @Column(name = "prix_journalier", nullable = false)
     private Double prixJournalier;
 
     @Column
     private Boolean disponible;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_hotel")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Hotel hotel;
 
     @Column(name = "date_ajout")
